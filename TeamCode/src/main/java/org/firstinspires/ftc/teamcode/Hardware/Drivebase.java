@@ -36,6 +36,7 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
+import com.qualcomm.robotcore.hardware.DistanceSensor;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.IMU;
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
@@ -46,6 +47,7 @@ import com.qualcomm.robotcore.util.Range;
 import org.firstinspires.ftc.robotcore.external.Supplier;
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
+import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.YawPitchRollAngles;
 
 import static org.firstinspires.ftc.teamcode.Utility.Config.HUB_FACING;
@@ -72,6 +74,7 @@ import static java.lang.Thread.sleep;
  */
 
 public class Drivebase {
+    private DistanceSensor sensorRange;
     private ElapsedTime runtime = new ElapsedTime();
     private final Supplier<Boolean> opModeIsActive;
     private final Telemetry telemetry;
@@ -134,6 +137,8 @@ public class Drivebase {
         FRDrive = hardwareMap.dcMotor.get("FRDrive");
         BLDrive = hardwareMap.dcMotor.get("BLDrive");
         BRDrive = hardwareMap.dcMotor.get("BRDrive");
+
+        sensorRange = hardwareMap.get(DistanceSensor.class, "distance");
 
         //leftSlideExtension = hardwareMap.dcMotor.get("leftSlideExtension");
         //rightSlideExtension = hardwareMap.dcMotor.get("rightSlideExtension");
@@ -330,7 +335,6 @@ public class Drivebase {
     }
 
     public void driveSideways(double maxDriveSpeed, double distance, double heading) {
-
         // Ensure that the OpMode is still active
         if (opModeIsActive.get()) {
 
@@ -388,8 +392,24 @@ public class Drivebase {
             BRDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         }
     }
+    public void driveSidewaysUntil(double speed, double target) {
+        double distance = sensorRange.getDistance(DistanceUnit.INCH);
+
+        double maxSpeed = .6; //max power/speed expected when furthest away.
+        double maxExpectedError = 6; //distance expected to go in inches to get to target.
+        double error = distance - target; //how far you have left to go.
+        double PGain = maxSpeed / maxExpectedError; //multiplyer for speed for slowing down.
+        double tolerance = 1/4; //in inches.
+
+        while (error > tolerance) {
+            FLDrive.setPower(PGain * error);
+            FRDrive.setPower(- PGain * error);
+            BLDrive.setPower(- PGain * error);
+            BRDrive.setPower(PGain * error);
+        }
+    }
     public void moveSlower(double axial, double lateral, double yaw) {
-        driveRobot(axial * .2, lateral * .2, yaw * .2);
+        driveRobot(axial * 0.5, lateral * 0.5, yaw * 0.5);
     }
 
     /**
@@ -622,6 +642,7 @@ public class Drivebase {
         telemetry.addData("Error  : Steer Pwr",  "%5.1f : %5.1f", headingError, turnSpeed);
         telemetry.addData("Wheel Speeds L : R", "%5.2f : %5.2f", leftSpeed, rightSpeed);
         //telemetry.addData("CurEncoders:",  "%7d :%7d", leftSlideExtension.getCurrentPosition(), rightSlideExtension.getCurrentPosition());
+        telemetry.addData("range: ", "%5.2f : %5.2f", sensorRange.getDistance(DistanceUnit.CM));
 
         telemetry.update();
     }
