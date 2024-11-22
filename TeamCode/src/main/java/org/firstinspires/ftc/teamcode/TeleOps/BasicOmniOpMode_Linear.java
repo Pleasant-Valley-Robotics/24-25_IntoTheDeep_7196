@@ -109,10 +109,11 @@ public class BasicOmniOpMode_Linear extends LinearOpMode {
             
             if (driveSlower) {
                 driveBase.driveRobot(axial * 0.5, lateral * 0.5, yaw * 0.5);
-                //driveBase.teleOpSlideDrive(slideExtensionJoystick);
             } else {
                 driveBase.sendTelemetry(true);
                 driveBase.driveRobot(axial, lateral, yaw);
+                driveBase.teleOpSlideDrive(slideExtensionJoystick);
+                driveBase.slideRotate(slideRotateJoystick);
             }
         }
     }}

@@ -647,8 +647,9 @@ public class Drivebase {
             leftSlideExtension.setPower(0);
             rightSlideExtension.setPower(0);
         }
-    }
 
+        sendTelemetry(true);
+    }
 
     /**
      * Display the various control parameters while driving
@@ -671,9 +672,8 @@ public class Drivebase {
         telemetry.addData("Heading- Target : Current", "%5.2f : %5.0f", targetHeading, getHeading());
         telemetry.addData("Error  : Steer Pwr", "%5.1f : %5.1f", headingError, turnSpeed);
         telemetry.addData("Wheel Speeds L : R", "%5.2f : %5.2f", leftSpeed, rightSpeed);
-        //telemetry.addData("CurEncoders: ", leftSlideExtension.getCurrentPosition(), rightSlideExtension.getCurrentPosition());
         telemetry.addData("range: ", sensorRange.getDistance(DistanceUnit.INCH));
-
+        telemetry.addData("Left encoder: ", leftSlideExtension.getCurrentPosition() + " Right encoder: " + rightSlideExtension.getCurrentPosition());
         telemetry.update();
     }
 
