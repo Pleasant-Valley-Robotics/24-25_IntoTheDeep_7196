@@ -53,7 +53,9 @@ public class Netzone extends LinearOpMode {
         //Was 10.
         sleep(200);
         //Hit wall.
-        drivebase.driveSideways(.2, 8.0, 90);
+        //drivebase.driveSideways(10);
+        //Target's how far you want to the robot to go.
+        drivebase.driveSidewaysUntil(2.2);
         //drivebase.turnToHeading(TURN_SPEED, 92);
         drivebase.driveStraight(DRIVE_SPEED, 42, 90);
 
@@ -69,7 +71,8 @@ public class Netzone extends LinearOpMode {
         drivebase.turnToHeading(TURN_SPEED, 180);
         drivebase.driveStraight(1, 104, 180);
         drivebase.turnToHeading(TURN_SPEED, 90);
-        drivebase.driveStraight(0.6, 19, 90);
+        //Was 19 before.
+        drivebase.driveStraight(0.6, 17, 90);
         //sleep(500);
         //drivebase.driveSideways(SIDE_SPEED, 22, 180);
     }
