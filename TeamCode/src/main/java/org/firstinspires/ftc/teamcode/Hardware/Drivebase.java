@@ -79,7 +79,7 @@ public class Drivebase {
 
     // Define Motor and Servo objects  (Make them private so they can't be accessed externally)
     private CRServo clawRotate;
-    private Servo clawPosition;
+    private CRServo clawPosition;
     private DcMotor leftSlideExtension;
     private DcMotor rightSlideExtension;
     private DcMotor leftSlideRotate;
@@ -113,12 +113,15 @@ public class Drivebase {
     // TODO: change this number once we do encoder math for the correct number.
     static final double COUNTS_PER_MOTOR_REV = (1.0+(46.0/17.0)) * (1.0+(46.0/11.0)) * 28.0; //Originated from https://www.gobilda.com/5203-series-yellow-jacket-planetary-gear-motor-19-2-1-ratio-24mm-length-8mm-rex-shaft-312-rpm-3-3-5v-encoder/
     static final double  COUNTS_PER_MOTOR_REV_223RPM = (1.0+(46.0/11.0)) * (1.0+(46.0/11.0)) * 28.0; //Originated from https://www.gobilda.com/5203-series-yellow-jacket-planetary-gear-motor-26-9-1-ratio-24mm-length-8mm-rex-shaft-223-rpm-3-3-5v-encoder/
+    static final double  COUNTS_PER_MOTOR_REV_60RPM = ((((1.0+(46.0/17.0))) * (1.0+(46.0/11.0))) * (1.0+(46.0/11.0)) * 28.0); //Originated from https://www.gobilda.com/5203-series-yellow-jacket-planetary-gear-motor-99-5-1-ratio-24mm-length-8mm-rex-shaft-60-rpm-3-3-5v-encoder/
     static final double DRIVE_GEAR_REDUCTION = 1.0;
     static final double SLIDE_GEAR_REDUCTION = 1.0;
+    static final double ROTATE_GEAR_REDUCTION = 1.0;
     static final double WHEEL_DIAMETER_INCHES = 104.0/25.4;   //mm to inches.
     static final double BELT_WHEEL_DIAMETER_INCHES = 38.2/25.4; //mm to inches. //Originated from https://www.gobilda.com/2mm-pitch-gt2-hub-mount-timing-belt-pulley-14mm-bore-60-tooth/.
     public final static double COUNTS_PER_INCH = (COUNTS_PER_MOTOR_REV * DRIVE_GEAR_REDUCTION) / (WHEEL_DIAMETER_INCHES * Math.PI);
     static final double COUNTS_PER_INCH_SLIDES = (COUNTS_PER_MOTOR_REV_223RPM * SLIDE_GEAR_REDUCTION) / (BELT_WHEEL_DIAMETER_INCHES * Math.PI);
+    static final double COUNTS_PER_DEGREE_ROTATE = (COUNTS_PER_MOTOR_REV_60RPM * ROTATE_GEAR_REDUCTION) / 360;
     static final double     DRIVE_SPEED             = 0.4;     // Max driving speed for better distance accuracy.
     static final double     TURN_SPEED              = 0.2;     // Max turn speed to limit turn rate.
     static final double     HEADING_THRESHOLD       = 1.0 ;    // How close must the heading get to the target before moving to next step.
@@ -135,14 +138,14 @@ public class Drivebase {
         BLDrive = hardwareMap.dcMotor.get("BLDrive");
         BRDrive = hardwareMap.dcMotor.get("BRDrive");
 
-        //leftSlideExtension = hardwareMap.dcMotor.get("leftSlideExtension");
-        //rightSlideExtension = hardwareMap.dcMotor.get("rightSlideExtension");
-        //leftSlideRotate = hardwareMap.dcMotor.get("leftSlideRotate");
-        //rightSlideRotate= hardwareMap.dcMotor.get("rightSlideRotate");
+        leftSlideExtension = hardwareMap.dcMotor.get("leftSlideExtension");
+        rightSlideExtension = hardwareMap.dcMotor.get("rightSlideExtension");
+        leftSlideRotate = hardwareMap.dcMotor.get("leftSlideRotate");
+        rightSlideRotate= hardwareMap.dcMotor.get("rightSlideRotate");
 
         // Define and initialize ALL installed servos.
-        //clawRotate = hardwareMap.get(CRServo.class, "clawRotate");
-        //clawPosition = hardwareMap.servo.get("clawPosition");
+        clawRotate = hardwareMap.get(CRServo.class, "clawRotate");
+        clawPosition = hardwareMap.crservo.get("clawPosition");
 
         //2 motors for rotation of slides. 2 for extension of slides.
         //For claw, 1 servo for rotation(rotates like swerve) and one for opening and closing.
@@ -162,10 +165,10 @@ public class Drivebase {
         FRDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         BLDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         BRDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        //leftSlideExtension.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        //rightSlideExtension.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        //leftSlideRotate.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        //rightSlideRotate.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        leftSlideExtension.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        rightSlideExtension.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        leftSlideRotate.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        rightSlideRotate.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
         // To drive forward, most robots need the motor on one side to be reversed, because the axles point in opposite directions.
         // Pushing the left stick forward MUST make robot go forward. So adjust these two lines based on your first test drive.
@@ -174,13 +177,11 @@ public class Drivebase {
         FRDrive.setDirection(DcMotor.Direction.FORWARD);
         BLDrive.setDirection(DcMotor.Direction.REVERSE);
         BRDrive.setDirection(DcMotor.Direction.FORWARD);
-        //leftSlideExtension.setDirection(DcMotor.Direction.REVERSE);
-        //rightSlideExtension.setDirection(DcMotor.Direction.FORWARD);
-        //leftSlideRotate.setDirection(DcMotorSimple.Direction.REVERSE);
-        //rightSlideRotate.setDirection(DcMotorSimple.Direction.FORWARD);
-        //clawRotate.setDirection(CRServo.Direction.FORWARD);
-
-        //clawPosition.setPosition(MID_SERVO);
+        leftSlideExtension.setDirection(DcMotor.Direction.REVERSE);
+        rightSlideExtension.setDirection(DcMotor.Direction.FORWARD);
+        leftSlideRotate.setDirection(DcMotorSimple.Direction.REVERSE);
+        rightSlideRotate.setDirection(DcMotorSimple.Direction.FORWARD);
+        clawRotate.setDirection(CRServo.Direction.FORWARD);
 
         // If there are encoders connected, switch to RUN_USING_ENCODER mode for greater accuracy
         FLDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
@@ -188,15 +189,15 @@ public class Drivebase {
         BLDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         BRDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
-        //leftSlideExtension.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        //rightSlideExtension.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        //leftSlideRotate.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        //rightSlideRotate.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        leftSlideExtension.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        rightSlideExtension.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        leftSlideRotate.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        rightSlideRotate.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
 
-        //leftSlideExtension.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        //rightSlideExtension.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        //leftSlideRotate.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        //rightSlideRotate.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        leftSlideExtension.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        rightSlideExtension.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        leftSlideRotate.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        rightSlideRotate.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
     }
 
     /**
@@ -496,7 +497,7 @@ public class Drivebase {
         if(power > 0.05 || power < -0.05) {
             //set upper limit.
             //check if you've reached the upper limit.
-            if(leftSlideExtension.getCurrentPosition() > 6000 || rightSlideExtension.getCurrentPosition() > 6000) {
+            if(leftSlideExtension.getCurrentPosition() > -3900 || rightSlideExtension.getCurrentPosition() > -3900) {
                 //if upper limit's been reached and person is trying to bring slides in let them.
                 if(power < 0) {
                     leftSlideExtension.setPower(power);
@@ -510,7 +511,7 @@ public class Drivebase {
             }
             //set lower limit.
             //check if you've reached the lower limit.
-            else if(leftSlideExtension.getCurrentPosition() <= 100 || rightSlideExtension.getCurrentPosition() <= 100) {
+            else if(leftSlideExtension.getCurrentPosition() >= 0 || rightSlideExtension.getCurrentPosition() >= 0) {
                 //if slides have reached their lower limit and person's trying to bring slides out let them.
                 if(power > 0) {
                     leftSlideExtension.setPower(power);
@@ -595,8 +596,133 @@ public class Drivebase {
     }
     //pos power's rotating upwards.
     //neg power's rotating downwards.
-    public void slideRotate(double power) {
+       public void teleOpSlideRotate(double power) {
+        if(power > 0.05 || power < -0.05) {
+            //set upper limit.
+            //check if you've reached the upper limit.
+            if(leftSlideRotate.getCurrentPosition() > 600 || rightSlideRotate.getCurrentPosition() > 600) {
+                //if upper limit's been reached and person is trying to bring slides in let them.
+                if(power < 0) {
+                    leftSlideRotate.setPower(power * 0.4);
+                    rightSlideRotate.setPower(power * 0.4);
+                }
+                //upper limit's been reached and person is trying to bring slides out further so stop them.
+                else {
+                    leftSlideRotate.setPower(0);
+                    rightSlideRotate.setPower(0);
+                }
+            }
+            //set lower limit.
+            //check if you've reached the lower limit.
+            else if(leftSlideRotate.getCurrentPosition() <= 25 || rightSlideRotate.getCurrentPosition() <= 25) {
+                //if slides have reached their lower limit and person's trying to bring slides out let them.
+                if(power > 0) {
+                    leftSlideRotate.setPower(power * 0.4);
+                    rightSlideRotate.setPower(power * 0.4);
+                }
+                //limit's been reached and person is trying to bring slides in further so stop them.
+                else {
+                    leftSlideRotate.setPower(0);
+                    rightSlideRotate.setPower(0);
+                }
+            }
+            //neither limit has been reached so slides can go in or out.
+            else
+            {
+                leftSlideRotate.setPower(power * 0.4);
+                rightSlideRotate.setPower(power * 0.4);
+            }
+        }
+        //no joystick power applied.
+        else {
+            leftSlideRotate.setPower(0.05);
+            rightSlideRotate.setPower(0.05);
+        }
+        sendTelemetry(true);
+    }
 
+    public void autoEncoderSlideRotate(double speed,
+                                 double leftDegree, double rightDegree,
+                                 double timeoutS) {
+        int newLeftTarget;
+        int newRightTarget;
+
+        // Ensure that the OpMode is still active
+        if (opModeIsActive.get()) {
+
+            leftSlideRotate.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+            rightSlideRotate.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+
+            leftSlideRotate.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+            rightSlideRotate.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+
+            // Determine new target position, and pass to motor controller
+            newLeftTarget = leftSlideRotate.getCurrentPosition() + (int) (leftDegree * COUNTS_PER_DEGREE_ROTATE);
+            newRightTarget = rightSlideRotate.getCurrentPosition() + (int) (rightDegree * COUNTS_PER_DEGREE_ROTATE);
+            leftSlideRotate.setTargetPosition(newLeftTarget);
+            rightSlideRotate.setTargetPosition(newRightTarget);
+
+            // Turn On RUN_TO_POSITION
+            leftSlideRotate.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            rightSlideRotate.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+
+            // reset the timeout time and start motion.
+            runtime.reset();
+            leftSlideRotate.setPower(Math.abs(speed));
+            rightSlideRotate.setPower(Math.abs(speed));
+
+            // keep looping while we are still active, and there is time left, and both motors are running.
+            // Note: We use (isBusy() && isBusy()) in the loop test, which means that when EITHER motor hits
+            // its target position, the motion will stop.  This is "safer" in the event that the robot will
+            // always end the motion as soon as possible.
+            // However, if you require that BOTH motors have finished their moves before the robot continues
+            // onto the next step, use (isBusy() || isBusy()) in the loop test.
+            while (opModeIsActive.get() &&
+                    (runtime.seconds() < timeoutS) &&
+                    (leftSlideRotate.isBusy() && rightSlideRotate.isBusy())) {
+
+                // Display it for the driver.
+                telemetry.addData("Running to", " %7d :%7d", newLeftTarget, newRightTarget);
+                telemetry.addData("Currently at", " at %7d :%7d",
+                        leftSlideRotate.getCurrentPosition(), rightSlideRotate.getCurrentPosition());
+                telemetry.update();
+            }
+
+            // Stop all motion;
+            leftSlideRotate.setPower(0);
+            rightSlideRotate.setPower(0);
+
+            // Turn off RUN_TO_POSITION
+            leftSlideRotate.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+            rightSlideRotate.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        }
+    }
+
+    public void closeClaw () {
+        {
+            clawPosition.setPower(1);
+        }
+    }
+    public void openClaw () {
+        {
+            clawPosition.setPower(0);
+        }
+    }
+    public void rotateClawLeft () {
+        {
+            clawRotate.setPower(1);
+
+        }
+    }
+    public void rotateClawRight () {
+        {
+            clawRotate.setPower(-1);
+        }
+    }
+    public void rotateClawStop () {
+        {
+            clawRotate.setPower(0);
+        }
     }
 
 
@@ -621,8 +747,9 @@ public class Drivebase {
         telemetry.addData("Heading- Target : Current", "%5.2f : %5.0f", targetHeading, getHeading());
         telemetry.addData("Error  : Steer Pwr",  "%5.1f : %5.1f", headingError, turnSpeed);
         telemetry.addData("Wheel Speeds L : R", "%5.2f : %5.2f", leftSpeed, rightSpeed);
-        //telemetry.addData("CurEncoders:",  "%7d :%7d", leftSlideExtension.getCurrentPosition(), rightSlideExtension.getCurrentPosition());
-
+        telemetry.addData("CurEncoders:",  "%7d :%7d", leftSlideExtension.getCurrentPosition(), rightSlideExtension.getCurrentPosition());
+        telemetry.addData("Arm Rotate position", "%7d :%7d", leftSlideRotate.getCurrentPosition(), rightSlideRotate.getCurrentPosition());
+        telemetry.addData("claw rotate and claw open power", "%7f :%7f", clawRotate.getPower(), clawPosition.getPower());
         telemetry.update();
     }
 

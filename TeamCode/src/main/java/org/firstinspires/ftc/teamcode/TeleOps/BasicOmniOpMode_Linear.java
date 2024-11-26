@@ -95,23 +95,51 @@ public class BasicOmniOpMode_Linear extends LinearOpMode {
         // run until the end of the match (driver presses STOP)
         while (opModeIsActive()) {
             // POV Mode uses left joystick to go forward & strafe, and right joystick to rotate.
-            double axial   = -gamepad1.left_stick_y;  // Note: pushing stick forward gives negative value
-            double lateral =  gamepad1.left_stick_x;
-            double yaw     =  gamepad1.right_stick_x;
+            double axial = -gamepad1.left_stick_y;  // Note: pushing stick forward gives negative value
+            double lateral = gamepad1.left_stick_x;
+            double yaw = gamepad1.right_stick_x;
 
             //To switch the neg value given to pos value.
-            double slideExtensionJoystick = -gamepad2.right_stick_y;
-            //Need to ask if I should invert this.
-            double slideRotateJoystick = gamepad2.left_stick_y;
+            double slideExtensionJoystick = gamepad2.right_stick_y;
+            double slideRotateJoystick = -gamepad2.left_stick_y;
 
             //to drive slower.
-            boolean driveSlower = gamepad1.right_bumper;
-            
-            if (driveSlower) {
+            boolean driveSlowerGP1 = gamepad1.right_bumper;
+            boolean driveSlowerGP2 = gamepad2.right_bumper;
+
+            if (driveSlowerGP1) {
                 driveBase.driveRobot(axial * 0.5, lateral * 0.5, yaw * 0.5);
-                //driveBase.teleOpSlideDrive(slideExtensionJoystick);
             } else {
                 driveBase.driveRobot(axial, lateral, yaw);
             }
+            if (driveSlowerGP2) {
+                driveBase.teleOpSlideDrive(slideExtensionJoystick * 0.2);
+                driveBase.teleOpSlideRotate(slideRotateJoystick * 0.2);
+            } else {
+                driveBase.teleOpSlideDrive(slideExtensionJoystick);
+                driveBase.teleOpSlideRotate(slideRotateJoystick);
+            }
+
+            if (gamepad2.dpad_left)
+            {
+                driveBase.rotateClawLeft();
+            }
+            else if (gamepad2.dpad_right)
+            {
+               driveBase.rotateClawRight();
+            }
+            else
+            {
+                driveBase.rotateClawStop();
+            }
+            if (gamepad2.a)
+            {
+                driveBase.closeClaw();
+            }
+            else
+            {
+                driveBase.openClaw();
+            }
         }
-    }}
+    }
+}

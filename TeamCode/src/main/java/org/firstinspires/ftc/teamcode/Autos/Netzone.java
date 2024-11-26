@@ -16,6 +16,10 @@ public class Netzone extends LinearOpMode {
         Drivebase drivebase = new Drivebase(hardwareMap, this::opModeIsActive, telemetry);
 
         waitForStart();
+        drivebase.autoEncoderSlideRotate(0.1, 10,10,0.5);
+        drivebase.autoEncoderSlide(0.1, 1,1 ,0.5);
+
+        sleep(30000);
 
         //Score preloaded sample.
         drivebase.driveSideways(SIDE_SPEED, 4, 0);
