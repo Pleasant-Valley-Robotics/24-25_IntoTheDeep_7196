@@ -116,7 +116,7 @@ public class BasicOmniOpMode_Linear extends LinearOpMode {
                 driveBase.teleOpSlideDrive(slideExtensionJoystick * 0.2);
                 driveBase.teleOpSlideRotate(slideRotateJoystick * 0.2);
             } else {
-                driveBase.teleOpSlideDrive(slideExtensionJoystick);
+                driveBase.teleOpSlideWithLimit(slideExtensionJoystick);
                 driveBase.teleOpSlideRotate(slideRotateJoystick);
             }
 
