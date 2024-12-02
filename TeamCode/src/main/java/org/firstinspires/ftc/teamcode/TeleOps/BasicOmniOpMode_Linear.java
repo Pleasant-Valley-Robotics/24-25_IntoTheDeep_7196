@@ -100,7 +100,7 @@ public class BasicOmniOpMode_Linear extends LinearOpMode {
             double yaw = gamepad1.right_stick_x;
 
             //To switch the neg value given to pos value.
-            double slideExtensionJoystick = gamepad2.right_stick_y;
+            double slideExtensionJoystick = -gamepad2.right_stick_y;
             double slideRotateJoystick = -gamepad2.left_stick_y;
 
             //to drive slower.
@@ -113,7 +113,7 @@ public class BasicOmniOpMode_Linear extends LinearOpMode {
                 driveBase.driveRobot(axial, lateral, yaw);
             }
             if (driveSlowerGP2) {
-                driveBase.teleOpSlideDrive(slideExtensionJoystick * 0.2);
+                driveBase.teleOpSlideWithLimit(slideExtensionJoystick * 0.2);
                 driveBase.teleOpSlideRotate(slideRotateJoystick * 0.2);
             } else {
                 driveBase.teleOpSlideWithLimit(slideExtensionJoystick);

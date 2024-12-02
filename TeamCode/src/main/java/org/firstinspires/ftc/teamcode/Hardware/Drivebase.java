@@ -29,17 +29,12 @@
 
 package org.firstinspires.ftc.teamcode.Hardware;
 
-import androidx.annotation.Nullable;
-
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
-import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.IMU;
-import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
-import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
 
@@ -48,8 +43,6 @@ import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.YawPitchRollAngles;
 
-import static org.firstinspires.ftc.teamcode.Utility.Config.HUB_FACING;
-import static org.firstinspires.ftc.teamcode.Utility.Config.TURNING_P_GAIN;
 import static java.lang.Thread.sleep;
 
 /*
@@ -111,7 +104,7 @@ public class Drivebase {
     public final double ARM_UP_POWER = 0.45;
     public final double ARM_DOWN_POWER = -0.45;
     // TODO: change this number once we do encoder math for the correct number.
-    static final double COUNTS_PER_MOTOR_REV = (1.0 + (46.0 / 17.0)) * (1.0 + (46.0 / 11.0)) * 28.0; //Originated from https://www.gobilda.com/5203-series-yellow-jacket-planetary-gear-motor-19-2-1-ratio-24mm-length-8mm-rex-shaft-312-rpm-3-3-5v-encoder/
+    static final double COUNTS_PER_MOTOR_REV_312RPM = (1.0 + (46.0 / 17.0)) * (1.0 + (46.0 / 11.0)) * 28.0; //Originated from https://www.gobilda.com/5203-series-yellow-jacket-planetary-gear-motor-19-2-1-ratio-24mm-length-8mm-rex-shaft-312-rpm-3-3-5v-encoder/
     static final double COUNTS_PER_MOTOR_REV_223RPM = (1.0 + (46.0 / 11.0)) * (1.0 + (46.0 / 11.0)) * 28.0; //Originated from https://www.gobilda.com/5203-series-yellow-jacket-planetary-gear-motor-26-9-1-ratio-24mm-length-8mm-rex-shaft-223-rpm-3-3-5v-encoder/
     static final double COUNTS_PER_MOTOR_REV_60RPM = ((((1.0 + (46.0 / 17.0))) * (1.0 + (46.0 / 11.0))) * (1.0 + (46.0 / 11.0)) * 28.0); //Originated from https://www.gobilda.com/5203-series-yellow-jacket-planetary-gear-motor-99-5-1-ratio-24mm-length-8mm-rex-shaft-60-rpm-3-3-5v-encoder/
     static final double DRIVE_GEAR_REDUCTION = 1.0;
@@ -119,8 +112,8 @@ public class Drivebase {
     static final double ROTATE_GEAR_REDUCTION = 1.0;
     static final double WHEEL_DIAMETER_INCHES = 104.0 / 25.4;   //mm to inches.
     static final double BELT_WHEEL_DIAMETER_INCHES = 38.2 / 25.4; //mm to inches. //Originated from https://www.gobilda.com/2mm-pitch-gt2-hub-mount-timing-belt-pulley-14mm-bore-60-tooth/.
-    public final static double COUNTS_PER_INCH = (COUNTS_PER_MOTOR_REV * DRIVE_GEAR_REDUCTION) / (WHEEL_DIAMETER_INCHES * Math.PI);
-    static final double COUNTS_PER_INCH_SLIDES = (COUNTS_PER_MOTOR_REV_223RPM * SLIDE_GEAR_REDUCTION) / (BELT_WHEEL_DIAMETER_INCHES * Math.PI);
+    public final static double COUNTS_PER_INCH = (COUNTS_PER_MOTOR_REV_312RPM * DRIVE_GEAR_REDUCTION) / (WHEEL_DIAMETER_INCHES * Math.PI);
+    static final double COUNTS_PER_INCH_SLIDES = (COUNTS_PER_MOTOR_REV_312RPM * SLIDE_GEAR_REDUCTION) / (BELT_WHEEL_DIAMETER_INCHES * Math.PI);
     static final double COUNTS_PER_DEGREE_ROTATE = (COUNTS_PER_MOTOR_REV_60RPM * ROTATE_GEAR_REDUCTION) / 360;
     static final double DRIVE_SPEED = 0.4;     // Max driving speed for better distance accuracy.
     static final double TURN_SPEED = 0.2;     // Max turn speed to limit turn rate.
@@ -177,8 +170,8 @@ public class Drivebase {
         FRDrive.setDirection(DcMotor.Direction.FORWARD);
         BLDrive.setDirection(DcMotor.Direction.REVERSE);
         BRDrive.setDirection(DcMotor.Direction.FORWARD);
-        leftSlideExtension.setDirection(DcMotor.Direction.REVERSE);
-        rightSlideExtension.setDirection(DcMotor.Direction.FORWARD);
+        leftSlideExtension.setDirection(DcMotor.Direction.FORWARD);
+        rightSlideExtension.setDirection(DcMotor.Direction.REVERSE);
         leftSlideRotate.setDirection(DcMotorSimple.Direction.REVERSE);
         rightSlideRotate.setDirection(DcMotorSimple.Direction.FORWARD);
         clawRotate.setDirection(CRServo.Direction.FORWARD);
@@ -599,32 +592,37 @@ public class Drivebase {
         return armAngleEncodersAvg / COUNTS_PER_DEGREE_ROTATE;
     }
 
-    public void teleOpSlideWithLimit(double power) {
-        double maxFootprint = 42.0; //inches
-        double compressedArmLength = 10.5; //inches
-        double offsetFromRear = 6.75; //inches
-        double maxExtension = (maxFootprint - offsetFromRear) / Math.cos(Math.toRadians(getSlideRotationAngle())) - compressedArmLength;
+    public double getSlideExtensionInches() {
         double curExtensionEncoders = (leftSlideExtension.getCurrentPosition() + rightSlideExtension.getCurrentPosition()) / 2.0;
-        double curExtension = curExtensionEncoders / COUNTS_PER_INCH_SLIDES;
+        return curExtensionEncoders / COUNTS_PER_INCH_SLIDES;
+    }
 
-        if (curExtension < maxExtension) {
+    public void teleOpSlideWithLimit(double power) {
+        double tolerance = 4.0; //4 inches of tolerance
+        double maxFootprint = 42.0 - tolerance; //inches. //Max distance to extend horizontally. //Canhe
+        double compressedArmLength = 10.5; //inches //Length of slides when fully in.
+        double offsetFromRear = 6.75; //inches //Distance from rear to point of rotation.
+        double maxExtension = (maxFootprint - offsetFromRear) / Math.cos(Math.toRadians(getSlideRotationAngle())) - compressedArmLength; //max that can be extended.
+
+        if (getSlideExtensionInches() < maxExtension) { // if slides are under the limit.
             leftSlideExtension.setPower(power);
             rightSlideExtension.setPower(power);
-        } else {
-            leftSlideExtension.setPower(-1);
-            rightSlideExtension.setPower(-1);
+        } else { //slides are over limit so bring them in automatically.
+            leftSlideExtension.setPower(-0.50);
+            rightSlideExtension.setPower(-0.50);
         }
     }
 
     public void teleOpSlideRotate(double power) {
         double deadzone = 0.05;
-        if (Math.abs(power) > deadzone) {
+
+        if (Math.abs(power) < deadzone) { // if the power applied is greater than the minimum power required to move the motor
             power = 0.0;
         }
 
         double lowerLimit = 5.0;
         double upperLimit = 45.0;
-
+        
         boolean underLowerLimit = getSlideRotationAngle() < lowerLimit;
         boolean aboveUpperLimit = getSlideRotationAngle() > upperLimit;
 
@@ -740,16 +738,15 @@ public class Drivebase {
             telemetry.addData("Target Pos L:R", "%7d:%7d:%7d:%7d", FLTarget, FRTarget, BLTarget, BRTarget);
             telemetry.addData("Actual Pos L:R", "%7d:%7d:%7d:%7d", FLDrive.getCurrentPosition(), FRDrive.getCurrentPosition(), BLDrive.getCurrentPosition(), BRDrive.getCurrentPosition());
             telemetry.addData("COUNTS_PER_INCH: ", COUNTS_PER_INCH);
-            telemetry.addData("COUNTS_PER_MOTOR_REV: ", COUNTS_PER_MOTOR_REV);
+            telemetry.addData("COUNTS_PER_MOTOR_REV: ", COUNTS_PER_MOTOR_REV_312RPM);
 
         } else {
             telemetry.addData("Motion", "Turning");
         }
 
-        double armAngleEncodersAvg = (leftSlideRotate.getCurrentPosition() + rightSlideRotate.getCurrentPosition()) / 2.0;
-        double thetaArmAngle = armAngleEncodersAvg / COUNTS_PER_DEGREE_ROTATE;
 
-        telemetry.addData("Arm Rotate Degrees", thetaArmAngle);
+        telemetry.addData("Arm Rotate Degrees", getSlideRotationAngle());
+        telemetry.addData("Slide Extension Inch", getSlideExtensionInches());
 
         telemetry.addData("Heading- Target : Current", "%5.2f : %5.0f", targetHeading, getHeading());
         telemetry.addData("Error  : Steer Pwr", "%5.1f : %5.1f", headingError, turnSpeed);
