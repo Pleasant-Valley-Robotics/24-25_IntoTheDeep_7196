@@ -71,7 +71,6 @@ public class Drivebase {
     /* Declare OpMode members. */
 
     // Define Motor and Servo objects  (Make them private so they can't be accessed externally)
-    private CRServo clawRotate;
     private CRServo clawPosition;
     private DcMotor leftSlideExtension;
     private DcMotor rightSlideExtension;
@@ -137,7 +136,6 @@ public class Drivebase {
         rightSlideRotate = hardwareMap.dcMotor.get("rightSlideRotate");
 
         // Define and initialize ALL installed servos.
-        clawRotate = hardwareMap.get(CRServo.class, "clawRotate");
         clawPosition = hardwareMap.crservo.get("clawPosition");
 
         //2 motors for rotation of slides. 2 for extension of slides.
@@ -174,7 +172,6 @@ public class Drivebase {
         rightSlideExtension.setDirection(DcMotor.Direction.REVERSE);
         leftSlideRotate.setDirection(DcMotorSimple.Direction.REVERSE);
         rightSlideRotate.setDirection(DcMotorSimple.Direction.FORWARD);
-        clawRotate.setDirection(CRServo.Direction.FORWARD);
 
         // If there are encoders connected, switch to RUN_USING_ENCODER mode for greater accuracy
         FLDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
@@ -706,26 +703,6 @@ public class Drivebase {
         }
     }
 
-    public void rotateClawLeft() {
-        {
-            clawRotate.setPower(1);
-
-        }
-    }
-
-    public void rotateClawRight() {
-        {
-            clawRotate.setPower(-1);
-        }
-    }
-
-    public void rotateClawStop() {
-        {
-            clawRotate.setPower(0);
-        }
-    }
-
-
     /**
      * Display the various control parameters while driving
      *
@@ -753,7 +730,6 @@ public class Drivebase {
         telemetry.addData("Wheel Speeds L : R", "%5.2f : %5.2f", leftSpeed, rightSpeed);
         telemetry.addData("CurEncoders:", "%7d :%7d", leftSlideExtension.getCurrentPosition(), rightSlideExtension.getCurrentPosition());
         telemetry.addData("Arm Rotate position", "%7d :%7d", leftSlideRotate.getCurrentPosition(), rightSlideRotate.getCurrentPosition());
-        telemetry.addData("claw rotate and claw open power", "%7f :%7f", clawRotate.getPower(), clawPosition.getPower());
         telemetry.update();
     }
 

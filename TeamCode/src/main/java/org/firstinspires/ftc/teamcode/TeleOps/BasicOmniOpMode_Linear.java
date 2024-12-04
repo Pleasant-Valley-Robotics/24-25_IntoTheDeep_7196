@@ -31,10 +31,9 @@ package org.firstinspires.ftc.teamcode.TeleOps;
 
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
-
 import org.firstinspires.ftc.teamcode.Hardware.Drivebase;
-
 
 
 
@@ -69,6 +68,11 @@ import org.firstinspires.ftc.teamcode.Hardware.Drivebase;
 @TeleOp(name="Drive", group="Linear OpMode")
 public class BasicOmniOpMode_Linear extends LinearOpMode {
     // Declare OpMode members for each of the 4 motors.
+
+    public Servo    leftClaw    = null;
+    public Servo    rightClaw   = null;
+
+    double clawOffset = 0;
     private ElapsedTime runtime = new ElapsedTime();
 
     @Override
@@ -91,6 +95,11 @@ public class BasicOmniOpMode_Linear extends LinearOpMode {
 
         waitForStart();
         runtime.reset();
+
+        leftClaw  = hardwareMap.get(Servo.class, "left_hand");
+        rightClaw = hardwareMap.get(Servo.class, "right_hand");
+        leftClaw.setPosition(0);
+        rightClaw.setPosition(0);
 
         // run until the end of the match (driver presses STOP)
         while (opModeIsActive()) {
@@ -120,26 +129,10 @@ public class BasicOmniOpMode_Linear extends LinearOpMode {
                 driveBase.teleOpSlideRotate(slideRotateJoystick);
             }
 
-            if (gamepad2.dpad_left)
-            {
-                driveBase.rotateClawLeft();
-            }
-            else if (gamepad2.dpad_right)
-            {
-               driveBase.rotateClawRight();
-            }
-            else
-            {
-                driveBase.rotateClawStop();
-            }
             if (gamepad2.a)
-            {
-                driveBase.closeClaw();
-            }
-            else
-            {
-                driveBase.openClaw();
-            }
+                leftClaw.setPosition(0);
+            else if (gamepad2.b)
+                leftClaw.setPosition(.06666);
         }
     }
 }
