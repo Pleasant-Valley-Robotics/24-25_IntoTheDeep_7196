@@ -9,7 +9,7 @@ import com.qualcomm.robotcore.hardware.Servo;
 import org.firstinspires.ftc.robotcore.external.SignificantMotionDetection;
 import org.firstinspires.ftc.teamcode.Hardware.Drivebase;
 
-@TeleOp(name = "TestingServoTeleOp")
+@Autonomous(name = "TrainingAuto", group = "Auto")
 public class trainingAuto extends LinearOpMode {
     private double SIDE_SPEED = .2;
     private Servo clawPosition;

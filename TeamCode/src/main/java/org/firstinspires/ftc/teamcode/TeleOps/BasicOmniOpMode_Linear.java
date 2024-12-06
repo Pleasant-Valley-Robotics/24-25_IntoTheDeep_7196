@@ -32,8 +32,11 @@ package org.firstinspires.ftc.teamcode.TeleOps;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.Servo;
+import com.qualcomm.robotcore.hardware.configuration.ServoFlavor;
 import com.qualcomm.robotcore.util.ElapsedTime;
+
 import org.firstinspires.ftc.teamcode.Hardware.Drivebase;
+import org.firstinspires.ftc.teamcode.Utility.Config;
 
 
 
@@ -65,13 +68,12 @@ import org.firstinspires.ftc.teamcode.Hardware.Drivebase;
  * Remove or comment out the @Disabled line to add this OpMode to the Driver Station OpMode list
  */
 
-@TeleOp(name="Drive", group="Linear OpMode")
+@TeleOp(name = "Drive", group = "Linear OpMode")
 public class BasicOmniOpMode_Linear extends LinearOpMode {
     // Declare OpMode members for each of the 4 motors.
 
-    public Servo    leftClaw    = null;
-    public Servo    rightClaw   = null;
-
+    public Servo leftClaw = null;
+    public Servo rightHand = null;
     double clawOffset = 0;
     private ElapsedTime runtime = new ElapsedTime();
 
@@ -96,10 +98,11 @@ public class BasicOmniOpMode_Linear extends LinearOpMode {
         waitForStart();
         runtime.reset();
 
-        leftClaw  = hardwareMap.get(Servo.class, "left_hand");
-        rightClaw = hardwareMap.get(Servo.class, "right_hand");
+        leftClaw = hardwareMap.get(Servo.class, "left_hand");
+        rightHand = hardwareMap.get(Servo.class, "right_hand");
+
         leftClaw.setPosition(0);
-        rightClaw.setPosition(0);
+        rightHand.setPosition(Config.servoWristLeftPos);
 
         // run until the end of the match (driver presses STOP)
         while (opModeIsActive()) {
@@ -114,7 +117,7 @@ public class BasicOmniOpMode_Linear extends LinearOpMode {
 
             //to drive slower.
             boolean driveSlowerGP1 = gamepad1.right_bumper;
-            boolean driveSlowerGP2 = gamepad2.right_bumper;
+            boolean driveSlowerGP2 = gamepad1.left_bumper;
 
             if (driveSlowerGP1) {
                 driveBase.driveRobot(axial * 0.5, lateral * 0.5, yaw * 0.5);
@@ -129,10 +132,23 @@ public class BasicOmniOpMode_Linear extends LinearOpMode {
                 driveBase.teleOpSlideRotate(slideRotateJoystick);
             }
 
+            //open clip
             if (gamepad2.a)
                 leftClaw.setPosition(0);
-            else if (gamepad2.b)
+            //close clip
+            if (gamepad2.b) {
                 leftClaw.setPosition(.06666);
+            }
+            if (gamepad2.dpad_right) {
+                //go right for this one.
+                rightHand.setPosition(Config.servoWristRightPos);
+            }
+            if (gamepad2.dpad_up) {
+                rightHand.setPosition(Config.servoWristMiddlePos);
+            }
+            if (gamepad2.dpad_left) {
+                rightHand.setPosition(Config.servoWristLeftPos);
+            }
         }
     }
 }
