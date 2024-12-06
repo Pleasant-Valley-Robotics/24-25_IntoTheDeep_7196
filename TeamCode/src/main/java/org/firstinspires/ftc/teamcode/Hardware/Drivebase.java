@@ -35,7 +35,6 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.IMU;
-import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
 
@@ -72,7 +71,7 @@ public class Drivebase {
     /* Declare OpMode members. */
 
     // Define Motor and Servo objects  (Make them private so they can't be accessed externally)
-    private Servo clawPosition;
+    private CRServo clawPosition;
     private DcMotor leftSlideExtension;
     private DcMotor rightSlideExtension;
     private DcMotor leftSlideRotate;
@@ -137,7 +136,7 @@ public class Drivebase {
         rightSlideRotate = hardwareMap.dcMotor.get("rightSlideRotate");
 
         // Define and initialize ALL installed servos.
-        //clawPosition = hardwareMap.servo.get("left_hand");
+        clawPosition = hardwareMap.crservo.get("clawPosition");
 
         //2 motors for rotation of slides. 2 for extension of slides.
         //For claw, 1 servo for rotation(rotates like swerve) and one for opening and closing.
@@ -619,7 +618,7 @@ public class Drivebase {
         }
 
         double lowerLimit = 5.0;
-        double upperLimit = 90.0;
+        double upperLimit = 45.0;
         
         boolean underLowerLimit = getSlideRotationAngle() < lowerLimit;
         boolean aboveUpperLimit = getSlideRotationAngle() > upperLimit;
@@ -628,8 +627,8 @@ public class Drivebase {
             leftSlideRotate.setPower(0.0);
             rightSlideRotate.setPower(0.0);
         } else {
-            leftSlideRotate.setPower(power * 0.5);
-            rightSlideRotate.setPower(power * 0.5);
+            leftSlideRotate.setPower(power);
+            rightSlideRotate.setPower(power);
         }
 
         sendTelemetry(true);
@@ -689,6 +688,18 @@ public class Drivebase {
             // Turn off RUN_TO_POSITION
             leftSlideRotate.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
             rightSlideRotate.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        }
+    }
+
+    public void closeClaw() {
+        {
+            clawPosition.setPower(1);
+        }
+    }
+
+    public void openClaw() {
+        {
+            clawPosition.setPower(0);
         }
     }
 
