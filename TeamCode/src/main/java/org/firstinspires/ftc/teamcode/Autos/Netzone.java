@@ -19,7 +19,7 @@ public class Netzone extends LinearOpMode {
         drivebase.autoEncoderSlideRotate(0.1, 10,10,0.5);
         drivebase.autoEncoderSlide(0.1, 1,1 ,0.5);
 
-        sleep(30000);
+        //sleep(30000);
 
         //Score preloaded sample.
         drivebase.driveSideways(SIDE_SPEED, 4, 0);
@@ -44,6 +44,7 @@ public class Netzone extends LinearOpMode {
         drivebase.driveStraight(DRIVE_SPEED, -46, 75);
         //Was 14.
         sleep(100);
+        drivebase.autoEncoderSlideRotate(0.1, 10,10,0.5);
         drivebase.driveSideways(SIDE_SPEED, 17, 75);
 
         //Score second.
@@ -57,6 +58,7 @@ public class Netzone extends LinearOpMode {
         //Was 10.
         sleep(200);
         //Hit wall.
+        drivebase.autoEncoderSlideRotate(0.1, 10,10,0.5);
         drivebase.driveSideways(.2, 8.0, 90);
         //drivebase.turnToHeading(TURN_SPEED, 92);
         drivebase.driveStraight(DRIVE_SPEED, 42, 90);
@@ -68,6 +70,7 @@ public class Netzone extends LinearOpMode {
         //Get away from the wall before turning.
         //sleep(500);
         //Was -8.
+        drivebase.autoEncoderSlideRotate(0.1, 10,10,0.5);
         drivebase.driveSideways(SIDE_SPEED, -8, 90);
         //Continue parking.
         drivebase.turnToHeading(TURN_SPEED, 180);
