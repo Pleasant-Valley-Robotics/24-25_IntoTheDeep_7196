@@ -74,22 +74,13 @@ public class BasicOmniOpMode_Linear extends LinearOpMode {
 
     public Servo leftClaw = null;
     public Servo rightHand = null;
+    public Servo clawWrist = null;
     double clawOffset = 0;
     private ElapsedTime runtime = new ElapsedTime();
 
     @Override
     public void runOpMode() {
         Drivebase driveBase = new Drivebase(hardwareMap, this::opModeIsActive, telemetry);
-        // ########################################################################################
-        // !!!            IMPORTANT Drive Information. Test your motor directions.            !!!!!
-        // ########################################################################################
-        // Most robots need the motors on one side to be reversed to drive forward.
-        // The motor reversals shown here are for a "direct drive" robot (the wheels turn the same direction as the motor shaft)
-        // If your robot has additional gear reductions or uses a right-angled drive, it's important to ensure
-        // that your motors are turning in the correct direction.  So, start out with the reversals here, BUT
-        // when you first test your robot, push the left joystick forward and observe the direction the wheels turn.
-        // Reverse the direction (flip FORWARD <-> REVERSE ) of any wheel that runs backward
-        // Keep testing until ALL the wheels move the robot forward when you push the left joystick forward.
 
         // Wait for the game to start (driver presses START)
         telemetry.addData("Status", "Initialized");
@@ -100,9 +91,13 @@ public class BasicOmniOpMode_Linear extends LinearOpMode {
 
         leftClaw = hardwareMap.get(Servo.class, "left_hand");
         rightHand = hardwareMap.get(Servo.class, "right_hand");
+        clawWrist = hardwareMap.get(Servo.class, "wristServo");
 
         leftClaw.setPosition(0.1);
         rightHand.setPosition(Config.servoWristLeftPos);
+        //Should be the wrist's lower limit here. //Can go straight from where it rests pointing upwards to 90 degrees. That's what you'll have to do.
+        //The servo will be laying down horizontally. Only tune this servo when it's been mounted to the clip and/or robot.
+        clawWrist.setPosition(.6);
 
         // run until the end of the match (driver presses STOP)
         while (opModeIsActive()) {
@@ -140,7 +135,6 @@ public class BasicOmniOpMode_Linear extends LinearOpMode {
                 leftClaw.setPosition(.1);
             }
             if (gamepad2.dpad_left) {
-                //go right for this one.
                 rightHand.setPosition(Config.servoWristLeftPos);
             }
             if (gamepad2.dpad_up) {
