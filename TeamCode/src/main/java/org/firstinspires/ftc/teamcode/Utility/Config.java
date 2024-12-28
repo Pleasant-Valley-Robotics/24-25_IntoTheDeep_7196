@@ -16,8 +16,8 @@ public class Config {
 
     public static final double TURNING_P_GAIN = 0.03;
     
-    public static final double servoWristLeftPos = 0.7;
-    public static final double servoWristMiddlePos = 0.64;
+    public static final double servoWristLeftPos = 1.0;
+    public static final double servoWristMiddlePos = 0.5;
     //The right limit for the wrist servo.
-    public static final double servoWristRightPos = 0.58;
+    public static final double servoWristRightPos = 0.0;
 }

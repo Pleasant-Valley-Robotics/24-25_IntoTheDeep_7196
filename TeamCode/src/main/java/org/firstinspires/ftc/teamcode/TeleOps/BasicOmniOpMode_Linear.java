@@ -31,52 +31,21 @@ package org.firstinspires.ftc.teamcode.TeleOps;
 
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.Servo;
-import com.qualcomm.robotcore.hardware.configuration.ServoFlavor;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
+import org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit;
 import org.firstinspires.ftc.teamcode.Hardware.Drivebase;
 import org.firstinspires.ftc.teamcode.Utility.Config;
-
-
-
-/*
- * This file contains an example of a Linear "OpMode".
- * An OpMode is a 'program' that runs in either the autonomous or the teleop period of an FTC match.
- * The names of OpModes appear on the menu of the FTC Driver Station.
- * When a selection is made from the menu, the corresponding OpMode is executed.
- *
- * This particular OpMode illustrates driving a 4-motor Omni-Directional (or Holonomic) robot.
- * This code will work with either a Mecanum-Drive or an X-Drive train.
- * Both of these drives are illustrated at https://gm0.org/en/latest/docs/robot-design/drivetrains/holonomic.html
- * Note that a Mecanum drive must display an X roller-pattern when viewed from above.
- *
- * Also note that it is critical to set the correct rotation direction for each motor.  See details below.
- *
- * Holonomic drives provide the ability for the robot to move in three axes (directions) simultaneously.
- * Each motion axis is controlled by one Joystick axis.
- *
- * 1) Axial:    Driving forward and backward               Left-joystick Forward/Backward
- * 2) Lateral:  Strafing right and left                     Left-joystick Right and Left
- * 3) Yaw:      Rotating Clockwise and counter clockwise    Right-joystick Right and Left
- *
- * This code is written assuming that the right-side motors need to be reversed for the robot to drive forward.
- * When you first test your robot, if it moves backward when you push the left stick forward, then you must flip
- * the direction of all 4 motors (see code below).
- *
- * Use Android Studio to Copy this Class, and Paste it into your team's code folder with a new name.
- * Remove or comment out the @Disabled line to add this OpMode to the Driver Station OpMode list
- */
 
 @TeleOp(name = "Drive", group = "Linear OpMode")
 public class BasicOmniOpMode_Linear extends LinearOpMode {
     // Declare OpMode members for each of the 4 motors.
 
-    public Servo leftClaw = null;
-    public Servo rightHand = null;
-    public Servo clawWrist = null;
-    double clawOffset = 0;
-    private ElapsedTime runtime = new ElapsedTime();
+    public Servo clipServo = null;
+    public Servo wristServo = null;
+    public Servo elbowServo = null;
 
     @Override
     public void runOpMode() {
@@ -86,18 +55,19 @@ public class BasicOmniOpMode_Linear extends LinearOpMode {
         telemetry.addData("Status", "Initialized");
         telemetry.update();
 
+        ElapsedTime timePassed = new ElapsedTime();
+
         waitForStart();
-        runtime.reset();
 
-        leftClaw = hardwareMap.get(Servo.class, "left_hand");
-        rightHand = hardwareMap.get(Servo.class, "right_hand");
-        clawWrist = hardwareMap.get(Servo.class, "wristServo");
+        clipServo = hardwareMap.get(Servo.class, "clipServo");
+        wristServo = hardwareMap.get(Servo.class, "wristServo");
+        elbowServo = hardwareMap.get(Servo.class, "elbowServo");
 
-        leftClaw.setPosition(0.1);
-        rightHand.setPosition(Config.servoWristLeftPos);
+        clipServo.setPosition(0.1);
+        wristServo.setPosition(Config.servoWristMiddlePos);
         //Should be the wrist's lower limit here. //Can go straight from where it rests pointing upwards to 90 degrees. That's what you'll have to do.
         //The servo will be laying down horizontally. Only tune this servo when it's been mounted to the clip and/or robot.
-        clawWrist.setPosition(.6);
+        elbowServo.setPosition(0.5);
 
         // run until the end of the match (driver presses STOP)
         while (opModeIsActive()) {
@@ -112,7 +82,7 @@ public class BasicOmniOpMode_Linear extends LinearOpMode {
 
             //to drive slower.
             boolean driveSlowerGP1 = gamepad1.right_bumper;
-            boolean driveSlowerGP2 = gamepad1.left_bumper;
+            boolean driveSlowerGP2 = gamepad2.left_bumper;
 
             if (driveSlowerGP1) {
                 driveBase.driveRobot(axial * 0.5, lateral * 0.5, yaw * 0.5);
@@ -129,20 +99,89 @@ public class BasicOmniOpMode_Linear extends LinearOpMode {
 
             //open clip
             if (gamepad2.a)
-                leftClaw.setPosition(0.5);
+                clipServo.setPosition(0.5);
             //close clip
             if (gamepad2.b) {
-                leftClaw.setPosition(.1);
+                clipServo.setPosition(.1);
             }
+            //Rotate clip
             if (gamepad2.dpad_left) {
-                rightHand.setPosition(Config.servoWristLeftPos);
+                wristServo.setPosition(Config.servoWristLeftPos);
             }
+            //Rotate clip
             if (gamepad2.dpad_up) {
-                rightHand.setPosition(Config.servoWristMiddlePos);
+                wristServo.setPosition(Config.servoWristMiddlePos);
             }
+            //Rotate clip
             if (gamepad2.dpad_right) {
-                rightHand.setPosition(Config.servoWristRightPos);
+                wristServo.setPosition(Config.servoWristRightPos);
+            }
+
+            //Pull clip downwards (go 180 degrees,to where the clip's facing straight down).  .
+            if (gamepad2.right_trigger > 0.1) {
+                elbowServo.setPosition(0.15);
+            }
+            if (gamepad2.right_bumper) {
+                elbowServo.setPosition(0.3);
+            }
+            //Pulling clip up and down from resting on slides to going straight down. (Where it rests on slides to 180.)
+            //Pull clip upwards to 0(back to where it's resting in line with the slides).
+            if (gamepad2.left_trigger > 0.1) {
+                elbowServo.setPosition(0.8);
             }
         }
+
+        driveBase.dT = timePassed.time();
+        timePassed.reset();
+        driveBase.totalRobotBatteryConsumption = driveBase.totalRobotBatteryConsumption + driveBase.controlHub.getCurrent(CurrentUnit.MILLIAMPS) * driveBase.dT / 3600;
+        driveBase.leftSlideExtensionBatteryConsumption = driveBase.leftSlideExtensionBatteryConsumption + ((DcMotorEx)driveBase.leftSlideExtension).getCurrent(CurrentUnit.MILLIAMPS) * driveBase.dT / 3600;
+        driveBase.rightSlideExtensionBatteryConsumption = driveBase.rightSlideExtensionBatteryConsumption + ((DcMotorEx)driveBase.rightSlideExtension).getCurrent(CurrentUnit.MILLIAMPS) * driveBase.dT / 3600;
+        driveBase.leftSlideRotateBatteryConsumption = driveBase.leftSlideRotateBatteryConsumption + ((DcMotorEx)driveBase.leftSlideRotate).getCurrent(CurrentUnit.MILLIAMPS) * driveBase.dT / 3600;
+        driveBase.rightSlideRotateBatteryConsumption = driveBase.rightSlideRotateBatteryConsumption + ((DcMotorEx)driveBase.rightSlideRotate).getCurrent(CurrentUnit.MILLIAMPS) * driveBase.dT / 3600;
+
+        driveBase.FLDriveBatteryConsumption = driveBase.FLDriveBatteryConsumption + ((DcMotorEx)driveBase.FLDrive).getCurrent(CurrentUnit.MILLIAMPS) * driveBase.dT / 3600;
+        driveBase.FRDriveBatteryConsumption = driveBase.FRDriveBatteryConsumption + ((DcMotorEx)driveBase.FRDrive).getCurrent(CurrentUnit.MILLIAMPS) * driveBase.dT / 3600;
+        driveBase.BLDriveBatteryConsumption = driveBase.BLDriveBatteryConsumption + ((DcMotorEx)driveBase.BLDrive).getCurrent(CurrentUnit.MILLIAMPS) * driveBase.dT / 3600;
+        driveBase.BRDriveBatteryConsumption = driveBase.BRDriveBatteryConsumption + ((DcMotorEx)driveBase.BRDrive).getCurrent(CurrentUnit.MILLIAMPS) * driveBase.dT / 3600;
+
+        driveBase.accessoriesBatteryConsumption = driveBase.accessoriesBatteryConsumption +
+                (driveBase.totalRobotBatteryConsumption - driveBase.leftSlideExtensionBatteryConsumption - driveBase.rightSlideExtensionBatteryConsumption - driveBase.leftSlideRotateBatteryConsumption - driveBase.rightSlideRotateBatteryConsumption -
+                        driveBase.FLDriveBatteryConsumption - driveBase.FRDriveBatteryConsumption - driveBase.BLDriveBatteryConsumption - driveBase.BRDriveBatteryConsumption) * driveBase.dT / 3600;
+
+        telemetry.addData("LSExtensionTarget: ", driveBase.leftSlideExtension.getTargetPosition());
+        telemetry.addData("RSExtensionTarget: ", driveBase.rightSlideExtension.getTargetPosition());
+        telemetry.addData("LSRotateTarget: ", driveBase.leftSlideRotate.getTargetPosition());
+        telemetry.addData("RSRotateTarget: ", driveBase.rightSlideRotate.getTargetPosition());
+
+        telemetry.addData("LSExtensionEncoder: ", driveBase.leftSlideExtension.getCurrentPosition());
+        telemetry.addData("RSExtensionEncoder: ", driveBase.rightSlideExtension.getCurrentPosition());
+        telemetry.addData("LSRotateEncoder: ", driveBase.leftSlideRotate.getCurrentPosition());
+        telemetry.addData("RSRotateEncoder: ", driveBase.rightSlideRotate.getCurrentPosition());
+
+        telemetry.addData("LSExtensionCurrent: ", ((DcMotorEx)driveBase.leftSlideExtension).getCurrent(CurrentUnit.AMPS));
+        telemetry.addData("RSExtensionCurrent: ", ((DcMotorEx)driveBase.rightSlideExtension).getCurrent(CurrentUnit.AMPS));
+        telemetry.addData("LSRotateCurrent: ", ((DcMotorEx)driveBase.leftSlideRotate).getCurrent(CurrentUnit.AMPS));
+        telemetry.addData("RSRotateCurrent: ", ((DcMotorEx)driveBase.rightSlideRotate).getCurrent(CurrentUnit.AMPS));
+        telemetry.addData("FLDriveCurrent: ", ((DcMotorEx)driveBase.FLDrive).getCurrent(CurrentUnit.AMPS));
+        telemetry.addData("FRDriveCurrent: ", ((DcMotorEx)driveBase.FRDrive).getCurrent(CurrentUnit.AMPS));
+        telemetry.addData("BLDriveCurrent: ", ((DcMotorEx)driveBase.BLDrive).getCurrent(CurrentUnit.AMPS));
+        telemetry.addData("BRDriveCurrent: ", ((DcMotorEx)driveBase.BRDrive).getCurrent(CurrentUnit.AMPS));
+
+        telemetry.addData("dT: ", driveBase.dT);
+
+        telemetry.addData("LSExtensionBatteryConsumption: ", driveBase.leftSlideExtensionBatteryConsumption);
+        telemetry.addData("RSExtensionBatteryConsumption: ", driveBase.rightSlideExtensionBatteryConsumption);
+        telemetry.addData("LSRotateBatteryConsumption: ", driveBase.leftSlideRotateBatteryConsumption);
+        telemetry.addData("RSRotateBatteryConsumption: ", driveBase.rightSlideRotateBatteryConsumption);
+
+        telemetry.addData("FLDriveBatteryConsumption: ", driveBase.FLDriveBatteryConsumption);
+        telemetry.addData("FRDriveBatteryConsumption: ", driveBase.FRDriveBatteryConsumption);
+        telemetry.addData("BLDriveBatteryConsumption: ", driveBase.BLDriveBatteryConsumption);
+        telemetry.addData("BRDriveBatteryConsumption: ", driveBase.BRDriveBatteryConsumption);
+
+        telemetry.addData("totalRobotBatteryConsumption: ", driveBase.totalRobotBatteryConsumption);
+
+        telemetry.addData("accessoriesBatteryConsumption: ", driveBase.accessoriesBatteryConsumption);
+        //When done look into logging/tracking the IMU.
     }
 }

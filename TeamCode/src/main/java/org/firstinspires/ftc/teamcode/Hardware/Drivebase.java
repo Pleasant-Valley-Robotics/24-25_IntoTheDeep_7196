@@ -29,6 +29,7 @@
 
 package org.firstinspires.ftc.teamcode.Hardware;
 
+import com.qualcomm.hardware.lynx.LynxModule;
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
@@ -45,6 +46,8 @@ import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.YawPitchRollAngles;
 
 import static java.lang.Thread.sleep;
+
+import java.util.Timer;
 
 /*
  * This file works in conjunction with the External Hardware Class sample called: ConceptExternalHardwareClass.java
@@ -73,15 +76,15 @@ public class Drivebase {
 
     // Define Motor and Servo objects  (Make them private so they can't be accessed externally)
     private Servo clawPosition;
-    private DcMotor leftSlideExtension;
-    private DcMotor rightSlideExtension;
-    private DcMotor leftSlideRotate;
-    private DcMotor rightSlideRotate;
-    private final DcMotor FLDrive;
-    private final DcMotor FRDrive;
-    private final DcMotor BLDrive;
-    private final DcMotor BRDrive;
-    private final IMU imu;
+    public DcMotor leftSlideExtension;
+    public DcMotor rightSlideExtension;
+    public DcMotor leftSlideRotate;
+    public DcMotor rightSlideRotate;
+    public final DcMotor FLDrive;
+    public final DcMotor FRDrive;
+    public final DcMotor BLDrive;
+    public final DcMotor BRDrive;
+    final IMU imu;
 
     private double headingError = 0;
 
@@ -122,9 +125,25 @@ public class Drivebase {
 
     static final double P_TURN_GAIN = 0.02;     // Larger is more responsive, but also less stable.
     static final double P_DRIVE_GAIN = 0.03;     // Larger is more responsive, but also less stable.
+    static final double BATTERY_CAPACITY = 3000; //3000 mAh. NEVER CHANGES.
+    public LynxModule controlHub = null;
+
+    public double leftSlideExtensionBatteryConsumption = 0.0;
+    public double rightSlideExtensionBatteryConsumption = 0.0;
+    public double leftSlideRotateBatteryConsumption = 0.0;
+    public double rightSlideRotateBatteryConsumption = 0.0;
+    public double dT; //Time since last loop iteration in seconds. Lap time.
+    public double FLDriveBatteryConsumption = 0.0;
+    public double FRDriveBatteryConsumption = 0.0;
+    public double BLDriveBatteryConsumption = 0.0;
+    public double BRDriveBatteryConsumption = 0.0;
+    public double totalRobotBatteryConsumption = 0.0;
+    public double accessoriesBatteryConsumption = 0.0;
 
     // Define a constructor that allows the OpMode to pass a reference to itself.
     public Drivebase(HardwareMap hardwareMap, Supplier<Boolean> opModeIsActive, Telemetry telemetry) {
+        ElapsedTime timePassed = new ElapsedTime();
+
         // Define and Initialize Motors (note: need to use reference to actual OpMode).
         FLDrive = hardwareMap.dcMotor.get("FLDrive");
         FRDrive = hardwareMap.dcMotor.get("FRDrive");
@@ -135,6 +154,7 @@ public class Drivebase {
         rightSlideExtension = hardwareMap.dcMotor.get("rightSlideExtension");
         leftSlideRotate = hardwareMap.dcMotor.get("leftSlideRotate");
         rightSlideRotate = hardwareMap.dcMotor.get("rightSlideRotate");
+        controlHub = ((LynxModule) hardwareMap.get(LynxModule.class, "Control Hub"));
 
         // Define and initialize ALL installed servos.
         //clawPosition = hardwareMap.servo.get("left_hand");
@@ -483,51 +503,6 @@ public class Drivebase {
         return Range.clip(headingError * proportionalGain, -1, 1);
     }
 
-    public void teleOpSlideDrive(double power) {
-        //moving slide code.
-        if (power > 0.05 || power < -0.05) {
-            //set upper limit.
-            //check if you've reached the upper limit.
-            if (leftSlideExtension.getCurrentPosition() > -3900 || rightSlideExtension.getCurrentPosition() > -3900) {
-                //if upper limit's been reached and person is trying to bring slides in let them.
-                if (power < 0) {
-                    leftSlideExtension.setPower(power);
-                    rightSlideExtension.setPower(power);
-                }
-                //upper limit's been reached and person is trying to bring slides out further so stop them.
-                else {
-                    leftSlideExtension.setPower(0);
-                    rightSlideExtension.setPower(0);
-                }
-            }
-            //set lower limit.
-            //check if you've reached the lower limit.
-            else if (leftSlideExtension.getCurrentPosition() >= 0 || rightSlideExtension.getCurrentPosition() >= 0) {
-                //if slides have reached their lower limit and person's trying to bring slides out let them.
-                if (power > 0) {
-                    leftSlideExtension.setPower(power);
-                    rightSlideExtension.setPower(power);
-                }
-                //limit's been reached and person is trying to bring slides in further so stop them.
-                else {
-                    leftSlideExtension.setPower(0);
-                    rightSlideExtension.setPower(0);
-                }
-            }
-            //neither limit has been reached so slides can go in or out.
-            else {
-                leftSlideExtension.setPower(power);
-                rightSlideExtension.setPower(power);
-            }
-        }
-        //no joystick power applied.
-        else {
-            leftSlideExtension.setPower(0);
-            rightSlideExtension.setPower(0);
-        }
-        sendTelemetry(true);
-    }
-
     public void autoEncoderSlide(double speed,
                                  double leftInches, double rightInches,
                                  double timeoutS) {
@@ -600,7 +575,7 @@ public class Drivebase {
         double maxFootprint = 42.0 - tolerance; //inches. //Max distance to extend horizontally. //Canhe
         double compressedArmLength = 10.5; //inches //Length of slides when fully in.
         double offsetFromRear = 6.75; //inches //Distance from rear to point of rotation.
-        double maxExtension = (maxFootprint - offsetFromRear) / Math.cos(Math.toRadians(getSlideRotationAngle())) - compressedArmLength; //max that can be extended.
+        double maxExtension = (maxFootprint - offsetFromRear) / Math.abs(Math.cos(Math.toRadians(getSlideRotationAngle()))) - compressedArmLength; //max that can be extended.
 
         if (getSlideExtensionInches() < maxExtension) { // if slides are under the limit.
             leftSlideExtension.setPower(power);
@@ -618,7 +593,7 @@ public class Drivebase {
             power = 0.0;
         }
 
-        double lowerLimit = 5.0;
+        double lowerLimit = 0.0;
         double upperLimit = 90.0;
         
         boolean underLowerLimit = getSlideRotationAngle() < lowerLimit;
@@ -628,8 +603,9 @@ public class Drivebase {
             leftSlideRotate.setPower(0.0);
             rightSlideRotate.setPower(0.0);
         } else {
-            leftSlideRotate.setPower(power * 0.5);
-            rightSlideRotate.setPower(power * 0.5);
+            //Was multiplied by 0.5 before.
+            leftSlideRotate.setPower(power);
+            rightSlideRotate.setPower(power);
         }
 
         sendTelemetry(true);
