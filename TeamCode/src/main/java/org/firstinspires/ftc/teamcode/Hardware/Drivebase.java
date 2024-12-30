@@ -125,19 +125,19 @@ public class Drivebase {
 
     static final double P_TURN_GAIN = 0.02;     // Larger is more responsive, but also less stable.
     static final double P_DRIVE_GAIN = 0.03;     // Larger is more responsive, but also less stable.
-    static final double BATTERY_CAPACITY = 3000; //3000 mAh. NEVER CHANGES.
+    public static final double BATTERY_CAPACITY = 3000; //3000 mAh. NEVER CHANGES.
     public LynxModule controlHub = null;
 
-    public double leftSlideExtensionBatteryConsumption = 0.0;
-    public double rightSlideExtensionBatteryConsumption = 0.0;
-    public double leftSlideRotateBatteryConsumption = 0.0;
-    public double rightSlideRotateBatteryConsumption = 0.0;
+    public double LSlideExtensionBatteryConsumption = 0.0;
+    public double RSlideExtensionBatteryConsumption = 0.0;
+    public double LSlideRotateBatteryConsumption = 0.0;
+    public double RSlideRotateBatteryConsumption = 0.0;
     public double dT; //Time since last loop iteration in seconds. Lap time.
     public double FLDriveBatteryConsumption = 0.0;
     public double FRDriveBatteryConsumption = 0.0;
     public double BLDriveBatteryConsumption = 0.0;
     public double BRDriveBatteryConsumption = 0.0;
-    public double totalRobotBatteryConsumption = 0.0;
+    public double totalMotorBatteryConsumption = 0.0;
     public double accessoriesBatteryConsumption = 0.0;
 
     // Define a constructor that allows the OpMode to pass a reference to itself.

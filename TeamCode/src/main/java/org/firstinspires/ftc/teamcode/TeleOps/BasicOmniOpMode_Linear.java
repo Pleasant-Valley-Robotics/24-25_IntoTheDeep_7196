@@ -28,14 +28,17 @@
  */
 
 package org.firstinspires.ftc.teamcode.TeleOps;
+import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.robotcore.eventloop.opmode.OpModeManagerImpl;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.Servo;
+import com.qualcomm.robotcore.hardware.VoltageSensor;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit;
+import org.firstinspires.ftc.teamcode.DataLogging.BatteryDatalogger;
 import org.firstinspires.ftc.teamcode.Hardware.Drivebase;
 import org.firstinspires.ftc.teamcode.Utility.Config;
 
@@ -46,6 +49,9 @@ public class BasicOmniOpMode_Linear extends LinearOpMode {
     public Servo clipServo = null;
     public Servo wristServo = null;
     public Servo elbowServo = null;
+    private BatteryDatalogger.Datalog datalog;
+    private VoltageSensor battery;
+    private int loopCounterVar = 1;
 
     @Override
     public void runOpMode() {
@@ -56,6 +62,19 @@ public class BasicOmniOpMode_Linear extends LinearOpMode {
         telemetry.update();
 
         ElapsedTime timePassed = new ElapsedTime();
+
+        //Datalogging
+        // Initialize the datalog
+        datalog = new BatteryDatalogger.Datalog("datalog_01");
+
+        // You do not need to fill every field of the datalog
+        // every time you call writeLine(); those fields will simply
+        // contain the last value.
+        datalog.opModeStatus.set("INIT");
+        datalog.battery.set(battery.getVoltage());
+        datalog.writeLine();
+
+        telemetry.setMsTransmissionInterval(50);
 
         waitForStart();
 
@@ -133,11 +152,11 @@ public class BasicOmniOpMode_Linear extends LinearOpMode {
 
         driveBase.dT = timePassed.time();
         timePassed.reset();
-        driveBase.totalRobotBatteryConsumption = driveBase.totalRobotBatteryConsumption + driveBase.controlHub.getCurrent(CurrentUnit.MILLIAMPS) * driveBase.dT / 3600;
-        driveBase.leftSlideExtensionBatteryConsumption = driveBase.leftSlideExtensionBatteryConsumption + ((DcMotorEx)driveBase.leftSlideExtension).getCurrent(CurrentUnit.MILLIAMPS) * driveBase.dT / 3600;
-        driveBase.rightSlideExtensionBatteryConsumption = driveBase.rightSlideExtensionBatteryConsumption + ((DcMotorEx)driveBase.rightSlideExtension).getCurrent(CurrentUnit.MILLIAMPS) * driveBase.dT / 3600;
-        driveBase.leftSlideRotateBatteryConsumption = driveBase.leftSlideRotateBatteryConsumption + ((DcMotorEx)driveBase.leftSlideRotate).getCurrent(CurrentUnit.MILLIAMPS) * driveBase.dT / 3600;
-        driveBase.rightSlideRotateBatteryConsumption = driveBase.rightSlideRotateBatteryConsumption + ((DcMotorEx)driveBase.rightSlideRotate).getCurrent(CurrentUnit.MILLIAMPS) * driveBase.dT / 3600;
+        driveBase.totalMotorBatteryConsumption = driveBase.totalMotorBatteryConsumption + (driveBase.LSlideExtensionBatteryConsumption+driveBase.RSlideExtensionBatteryConsumption+driveBase.LSlideRotateBatteryConsumption+driveBase.RSlideRotateBatteryConsumption+driveBase.controlHub.getCurrent(CurrentUnit.MILLIAMPS))*driveBase.dT/3600;
+        driveBase.LSlideExtensionBatteryConsumption = driveBase.LSlideExtensionBatteryConsumption + ((DcMotorEx)driveBase.leftSlideExtension).getCurrent(CurrentUnit.MILLIAMPS) * driveBase.dT / 3600;
+        driveBase.RSlideExtensionBatteryConsumption = driveBase.RSlideExtensionBatteryConsumption + ((DcMotorEx)driveBase.rightSlideExtension).getCurrent(CurrentUnit.MILLIAMPS) * driveBase.dT / 3600;
+        driveBase.LSlideRotateBatteryConsumption = driveBase.LSlideRotateBatteryConsumption + ((DcMotorEx)driveBase.leftSlideRotate).getCurrent(CurrentUnit.MILLIAMPS) * driveBase.dT / 3600;
+        driveBase.RSlideRotateBatteryConsumption = driveBase.RSlideRotateBatteryConsumption + ((DcMotorEx)driveBase.rightSlideRotate).getCurrent(CurrentUnit.MILLIAMPS) * driveBase.dT / 3600;
 
         driveBase.FLDriveBatteryConsumption = driveBase.FLDriveBatteryConsumption + ((DcMotorEx)driveBase.FLDrive).getCurrent(CurrentUnit.MILLIAMPS) * driveBase.dT / 3600;
         driveBase.FRDriveBatteryConsumption = driveBase.FRDriveBatteryConsumption + ((DcMotorEx)driveBase.FRDrive).getCurrent(CurrentUnit.MILLIAMPS) * driveBase.dT / 3600;
@@ -145,7 +164,7 @@ public class BasicOmniOpMode_Linear extends LinearOpMode {
         driveBase.BRDriveBatteryConsumption = driveBase.BRDriveBatteryConsumption + ((DcMotorEx)driveBase.BRDrive).getCurrent(CurrentUnit.MILLIAMPS) * driveBase.dT / 3600;
 
         driveBase.accessoriesBatteryConsumption = driveBase.accessoriesBatteryConsumption +
-                (driveBase.totalRobotBatteryConsumption - driveBase.leftSlideExtensionBatteryConsumption - driveBase.rightSlideExtensionBatteryConsumption - driveBase.leftSlideRotateBatteryConsumption - driveBase.rightSlideRotateBatteryConsumption -
+                (driveBase.totalMotorBatteryConsumption - driveBase.LSlideExtensionBatteryConsumption - driveBase.RSlideExtensionBatteryConsumption - driveBase.LSlideRotateBatteryConsumption - driveBase.RSlideRotateBatteryConsumption -
                         driveBase.FLDriveBatteryConsumption - driveBase.FRDriveBatteryConsumption - driveBase.BLDriveBatteryConsumption - driveBase.BRDriveBatteryConsumption) * driveBase.dT / 3600;
 
         telemetry.addData("LSExtensionTarget: ", driveBase.leftSlideExtension.getTargetPosition());
@@ -169,19 +188,63 @@ public class BasicOmniOpMode_Linear extends LinearOpMode {
 
         telemetry.addData("dT: ", driveBase.dT);
 
-        telemetry.addData("LSExtensionBatteryConsumption: ", driveBase.leftSlideExtensionBatteryConsumption);
-        telemetry.addData("RSExtensionBatteryConsumption: ", driveBase.rightSlideExtensionBatteryConsumption);
-        telemetry.addData("LSRotateBatteryConsumption: ", driveBase.leftSlideRotateBatteryConsumption);
-        telemetry.addData("RSRotateBatteryConsumption: ", driveBase.rightSlideRotateBatteryConsumption);
+        telemetry.addData("LSExtensionBatteryConsumption: ", driveBase.LSlideExtensionBatteryConsumption);
+        telemetry.addData("RSExtensionBatteryConsumption: ", driveBase.RSlideExtensionBatteryConsumption);
+        telemetry.addData("LSRotateBatteryConsumption: ", driveBase.LSlideRotateBatteryConsumption);
+        telemetry.addData("RSRotateBatteryConsumption: ", driveBase.RSlideRotateBatteryConsumption);
 
         telemetry.addData("FLDriveBatteryConsumption: ", driveBase.FLDriveBatteryConsumption);
         telemetry.addData("FRDriveBatteryConsumption: ", driveBase.FRDriveBatteryConsumption);
         telemetry.addData("BLDriveBatteryConsumption: ", driveBase.BLDriveBatteryConsumption);
         telemetry.addData("BRDriveBatteryConsumption: ", driveBase.BRDriveBatteryConsumption);
 
-        telemetry.addData("totalRobotBatteryConsumption: ", driveBase.totalRobotBatteryConsumption);
+        telemetry.addData("totalMotorBatteryConsumption: ", driveBase.totalMotorBatteryConsumption);
 
         telemetry.addData("accessoriesBatteryConsumption: ", driveBase.accessoriesBatteryConsumption);
-        //When done look into logging/tracking the IMU.
+
+        //Datalogging
+        datalog.opModeStatus.set("RUNNING");
+
+        datalog.loopCounter.set(loopCounterVar);
+        datalog.battery.set(battery.getVoltage());
+
+        datalog.totalMotorBatteryConsumption.set(driveBase.totalMotorBatteryConsumption);
+        datalog.LSlideExtensionBatteryConsumption.set(driveBase.LSlideExtensionBatteryConsumption);
+        datalog.RSlideExtensionBatteryConsumption.set(driveBase.RSlideExtensionBatteryConsumption); 
+        datalog.LSlideRotateBatteryConsumption.set(driveBase.LSlideRotateBatteryConsumption);
+        datalog.RSlideRotateBatteryConsumption.set(driveBase.RSlideRotateBatteryConsumption);
+        datalog.FLDriveBatteryConsumption.set(driveBase.FLDriveBatteryConsumption);
+        datalog.FRDriveBatteryConsumption.set(driveBase.FRDriveBatteryConsumption);
+        datalog.BLDriveBatteryConsumption.set(driveBase.BLDriveBatteryConsumption);
+        datalog.BRDriveBatteryConsumption.set(driveBase.BRDriveBatteryConsumption);
+        datalog.accessoriesBatteryConsumption.set(driveBase.accessoriesBatteryConsumption);
+        datalog.BATTERY_CAPACITY.set(driveBase.BATTERY_CAPACITY);
+
+        // The logged timestamp is taken when writeLine() is called.
+        datalog.writeLine();
+
+        // Datalog fields are stored as text only; do not format here.
+        telemetry.addData("totaltotalMotorBatteryConsumption", datalog.totalMotorBatteryConsumption);
+        telemetry.addData("LSlideExtensionBatteryConsumption", datalog.LSlideExtensionBatteryConsumption);
+        telemetry.addData("RSlideExtensionBatteryConsumption", datalog.RSlideExtensionBatteryConsumption);
+        telemetry.addData("LSlideRotateBatteryConsumption", datalog.LSlideRotateBatteryConsumption);
+        telemetry.addData("RSlideRotateBatteryConsumption", datalog.RSlideRotateBatteryConsumption);
+        telemetry.addData("FLDriveBatteryConsumption", datalog.FLDriveBatteryConsumption);
+        telemetry.addData("FRDriveBatteryConsumption", datalog.FRDriveBatteryConsumption);
+        telemetry.addData("BLDriveBatteryConsumption", datalog.BLDriveBatteryConsumption);
+        telemetry.addData("BRDriveBatteryConsumption", datalog.BRDriveBatteryConsumption);
+        telemetry.addData("accessoriesBatteryConsumption", datalog.accessoriesBatteryConsumption);
+        telemetry.addLine();
+        telemetry.addData("OpMode Status", datalog.opModeStatus);
+        telemetry.addData("Loop Counter", datalog.loopCounter);
+        telemetry.addData("Battery", datalog.battery);
+        telemetry.addData("batteryCapacity", datalog.BATTERY_CAPACITY);
+
+        telemetry.update();
+
+        sleep(20);
+
+        //Increase by one the amount of times the code has run.
+        loopCounterVar++;
     }
 }
