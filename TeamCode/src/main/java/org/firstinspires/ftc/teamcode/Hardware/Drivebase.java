@@ -110,14 +110,15 @@ public class Drivebase {
     static final double COUNTS_PER_MOTOR_REV_312RPM = (1.0 + (46.0 / 17.0)) * (1.0 + (46.0 / 11.0)) * 28.0; //Originated from https://www.gobilda.com/5203-series-yellow-jacket-planetary-gear-motor-19-2-1-ratio-24mm-length-8mm-rex-shaft-312-rpm-3-3-5v-encoder/
     static final double COUNTS_PER_MOTOR_REV_223RPM = (1.0 + (46.0 / 11.0)) * (1.0 + (46.0 / 11.0)) * 28.0; //Originated from https://www.gobilda.com/5203-series-yellow-jacket-planetary-gear-motor-26-9-1-ratio-24mm-length-8mm-rex-shaft-223-rpm-3-3-5v-encoder/
     static final double COUNTS_PER_MOTOR_REV_60RPM = ((((1.0 + (46.0 / 17.0))) * (1.0 + (46.0 / 11.0))) * (1.0 + (46.0 / 11.0)) * 28.0); //Originated from https://www.gobilda.com/5203-series-yellow-jacket-planetary-gear-motor-99-5-1-ratio-24mm-length-8mm-rex-shaft-60-rpm-3-3-5v-encoder/
+    static final double COUNTS_PER_MOTOR_REV_1150RPM = COUNTS_PER_MOTOR_REV_60RPM * (60.0/1150.0);
     static final double DRIVE_GEAR_REDUCTION = 1.0;
     static final double SLIDE_GEAR_REDUCTION = 1.0;
-    static final double ROTATE_GEAR_REDUCTION = 1.0;
+    static final double ROTATE_GEAR_REDUCTION = 28.0;
     static final double WHEEL_DIAMETER_INCHES = 104.0 / 25.4;   //mm to inches.
     static final double BELT_WHEEL_DIAMETER_INCHES = 38.2 / 25.4; //mm to inches. //Originated from https://www.gobilda.com/2mm-pitch-gt2-hub-mount-timing-belt-pulley-14mm-bore-60-tooth/.
     public final static double COUNTS_PER_INCH = (COUNTS_PER_MOTOR_REV_312RPM * DRIVE_GEAR_REDUCTION) / (WHEEL_DIAMETER_INCHES * Math.PI);
     static final double COUNTS_PER_INCH_SLIDES = (COUNTS_PER_MOTOR_REV_312RPM * SLIDE_GEAR_REDUCTION) / (BELT_WHEEL_DIAMETER_INCHES * Math.PI);
-    static final double COUNTS_PER_DEGREE_ROTATE = (COUNTS_PER_MOTOR_REV_60RPM * ROTATE_GEAR_REDUCTION) / 360;
+    static final double COUNTS_PER_DEGREE_ROTATE = (COUNTS_PER_MOTOR_REV_1150RPM * ROTATE_GEAR_REDUCTION) / 360;
     static final double DRIVE_SPEED = 0.4;     // Max driving speed for better distance accuracy.
     static final double TURN_SPEED = 0.2;     // Max turn speed to limit turn rate.
     static final double HEADING_THRESHOLD = 1.0;    // How close must the heading get to the target before moving to next step.
